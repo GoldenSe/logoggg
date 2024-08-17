@@ -46,7 +46,15 @@
     #unity-footer {
       display: none; /* Скрываем футер Unity */
     }
+
+    #wallet-info {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 18px;
+    }
   </style>
+  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <script src="tonconnect.js"></script>
 </head>
 <body>
   <div id="unity-container">
@@ -56,6 +64,7 @@
         <div id="unity-progress-bar-full"></div>
       </div>
     </div>
+    <div id="wallet-info">Идет подключение...</div>
     <div id="unity-warning"></div>
     <div id="unity-footer">
       <div id="unity-webgl-logo"></div>
@@ -128,6 +137,11 @@
               fullscreenButton.onclick = () => {
                 unityInstance.SetFullscreen(1);
               };
+
+              // Передаем функцию для получения адреса кошелька в Unity
+              window.SendMessageToUnity = function(message) {
+                unityInstance.SendMessage('GameController', 'OnWalletConnected', message);
+              };
             }).catch((message) => {
               alert(message);
             });
@@ -145,6 +159,7 @@
       }
     }
 
+    // Запускаем подключение к кошельку
     loadUnityOnMobile();
   </script>
 </body>
