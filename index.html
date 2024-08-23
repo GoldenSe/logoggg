@@ -11,13 +11,12 @@
     <div id="unity-container" class="unity-desktop">
       <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
       <div id="unity-loading-bar">
-        <!-- Custom Loading Bar -->
-        <div id="custom-loading-bar">
-          <div id="loading-bar-text">Loading...</div>
-          <div id="loading-bar-fill"></div>
+        <!-- Replace the Unity logo with a loading bar -->
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
         </div>
       </div>
-      <div id="unity-warning"> </div>
+      <div id="unity-warning"></div>
       <div id="unity-footer">
         <div id="unity-webgl-logo"></div>
         <div id="unity-fullscreen-button"></div>
@@ -25,98 +24,84 @@
       </div>
     </div>
     <script>
-
-      var container = document.querySelector("#unity-container");
-      var canvas = document.querySelector("#unity-canvas");
-      var loadingBar = document.querySelector("#unity-loading-bar");
-      var progressBarFull = document.querySelector("#loading-bar-fill"); // Custom progress bar fill
-      var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-      var warningBanner = document.querySelector("#unity-warning");
-
-      // Function to show a message and block the game on non-mobile devices
-      function blockOnDesktop() {
-        document.body.innerHTML = "<h1>This game is only available on mobile devices.</h1>";
+      // Check if the device is mobile
+      function isMobileDevice() {
+        return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       }
 
-      // Check if the user is on a mobile device
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
+      // Load Unity only on mobile devices
+      function loadUnityOnMobile() {
+        if (isMobileDevice()) {
+          document.addEventListener("DOMContentLoaded", function() {
+            var container = document.querySelector("#unity-container");
+            var canvas = document.querySelector("#unity-canvas");
+            var loadingBar = document.querySelector("#unity-loading-bar");
+            var progressBarFull = document.querySelector("#unity-progress-bar-full");
+            var fullscreenButton = document.querySelector("#unity-fullscreen-button");
+            var warningBanner = document.querySelector("#unity-warning");
 
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-        container.className = "unity-mobile";
-        canvas.className = "unity-mobile";
+            function unityShowBanner(msg, type) {
+              function updateBannerVisibility() {
+                warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+              }
+              var div = document.createElement('div');
+              div.innerHTML = msg;
+              warningBanner.appendChild(div);
+              if (type == 'error') div.style = 'background: red; padding: 10px;';
+              else {
+                if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+                setTimeout(function() {
+                  warningBanner.removeChild(div);
+                  updateBannerVisibility();
+                }, 5000);
+              }
+              updateBannerVisibility();
+            }
 
-        // To lower canvas resolution on mobile devices to gain some
-        // performance, uncomment the following line:
-        // config.devicePixelRatio = 1;
-
-        loadingBar.style.display = "block";
-
-        var buildUrl = "Build";
-        var loaderUrl = buildUrl + "/game.loader.js";
-        var config = {
-          dataUrl: buildUrl + "/game.data",
-          frameworkUrl: buildUrl + "/game.framework.js",
-          codeUrl: buildUrl + "/game.wasm",
-          streamingAssetsUrl: "StreamingAssets",
-          companyName: "DefaultCompany",
-          productName: "Horse",
-          productVersion: "1.0",
-          showBanner: unityShowBanner,
-        };
-
-        var script = document.createElement("script");
-        script.src = loaderUrl;
-        script.onload = () => {
-          createUnityInstance(canvas, config, (progress) => {
-            progressBarFull.style.width = 100 * progress + "%";
-          }).then((unityInstance) => {
-            loadingBar.style.display = "none";
-            fullscreenButton.onclick = () => {
-              unityInstance.SetFullscreen(1);
+            var buildUrl = "Build";
+            var loaderUrl = buildUrl + "/game.loader.js";
+            var config = {
+              dataUrl: buildUrl + "/game.data",
+              frameworkUrl: buildUrl + "/game.framework.js",
+              codeUrl: buildUrl + "/game.wasm",
+              streamingAssetsUrl: "StreamingAssets",
+              companyName: "DefaultCompany",
+              productName: "Horse",
+              productVersion: "1.0",
+              showBanner: unityShowBanner,
             };
-          }).catch((message) => {
-            alert(message);
+
+            // Adjust canvas size and loading bar for mobile devices
+            var meta = document.createElement('meta');
+            meta.name = 'viewport';
+            meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+            document.getElementsByTagName('head')[0].appendChild(meta);
+            container.className = "unity-mobile";
+            canvas.className = "unity-mobile";
+
+            loadingBar.style.display = "block";
+
+            var script = document.createElement("script");
+            script.src = loaderUrl;
+            script.onload = () => {
+              createUnityInstance(canvas, config, (progress) => {
+                progressBarFull.style.width = 100 * progress + "%";
+              }).then((unityInstance) => {
+                loadingBar.style.display = "none";
+                fullscreenButton.onclick = () => {
+                  unityInstance.SetFullscreen(1);
+                };
+              }).catch((message) => {
+                alert(message);
+              });
+            };
+
+            document.body.appendChild(script);
           });
-        };
-
-        document.body.appendChild(script);
-
-      } else {
-        // If the user is on a desktop device, block the game
-        blockOnDesktop();
+        }
       }
 
+      loadUnityOnMobile();
     </script>
-    <style>
-      /* Custom styles for the loading bar */
-      #custom-loading-bar {
-        width: 100%;
-        height: 30px;
-        background-color: #ccc;
-        position: relative;
-        margin-top: 20px;
-      }
-
-      #loading-bar-fill {
-        height: 100%;
-        width: 0%;
-        background-color: #4caf50;
-      }
-
-      #loading-bar-text {
-        position: absolute;
-        width: 100%;
-        text-align: center;
-        top: 50%;
-        transform: translateY(-50%);
-        font-family: Arial, sans-serif;
-        font-size: 16px;
-        color: #333;
-      }
-    </style>
   </body>
 </html>
