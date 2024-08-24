@@ -6,13 +6,22 @@
     <title>Unity WebGL Player | Horse</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
+    <style>
+      /* Убираем логотип Unity */
+      #unity-logo {
+        display: none;
+      }
+      /* Перекрашиваем шкалу загрузки в оранжевый цвет */
+      #unity-progress-bar-full {
+        background-color: orange;
+      }
+    </style>
   </head>
   <body>
     <div id="unity-container" class="unity-desktop">
       <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
       <div id="unity-loading-bar">
         <!-- Логотип Unity был удален -->
-        <!-- Шкала загрузки будет отображаться вместо логотипа -->
         <div id="unity-progress-bar-empty">
           <div id="unity-progress-bar-full"></div>
         </div>
