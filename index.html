@@ -4,45 +4,172 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Collector</title>
+    <title>Crypto Gold Mining</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            text-align: center;
+            font-family: 'Roboto', sans-serif;
+            background-color: #1e1e2f;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        button {
-            margin: 5px;
+        .header {
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            background-color: #292b4d;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 90%;
+            max-width: 800px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: #2b2e4a;
+            border-radius: 10px;
+            padding: 20px;
+            width: 100%;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .card h2 {
+            margin: 0 0 10px;
+            font-size: 1.5em;
+            color: #ffd700;
+        }
+
+        .card p {
+            margin: 5px 0;
+        }
+
+        .card button {
+            background-color: #00adb5;
+            border: none;
             padding: 10px;
+            border-radius: 5px;
+            color: #ffffff;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            transition: 0.3s;
+        }
+
+        .card button:hover {
+            background-color: #007a79;
         }
 
         #animatedGold {
             position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffd700;
+            font-weight: bold;
             transition: all 1s ease-in-out;
             opacity: 0;
+        }
+
+        .navbar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            background: #292b4d;
+            padding: 10px 0;
+            box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .navbar button {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .navbar button i {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .navbar button:hover {
+            color: #ffd700;
         }
     </style>
 </head>
 <body>
-    <h1>Gold Collector</h1>
-    <p id="resourceText">Gold: 0.00 g</p>
-    <button id="searchButton">Start Collecting</button>
-    <button id="collectButton" style="display: none;">Collect Gold</button>
-    <button id="withdrawButton">Withdraw Gold</button>
-    <p id="timeUntilNextCollectText"></p>
-    <p id="messageText"></p>
-    <span id="animatedGold" style="display: none;">+0.00 g</span>
+    <header class="header">
+        <h1>Crypto Gold Mining</h1>
+    </header>
+
+    <div class="container">
+        <!-- Карточка майнинга -->
+        <div class="card">
+            <h2>Gold Miner #1</h2>
+            <p id="resourceText">Gold: 0.00 g</p>
+            <p id="timeUntilNextCollectText"></p>
+            <button id="searchButton">Start Mining</button>
+            <button id="collectButton" style="display: none;">Collect Gold</button>
+            <button id="withdrawButton">Withdraw Gold</button>
+            <p id="messageText"></p>
+            <span id="animatedGold" style="display: none;">+0.00 g</span>
+        </div>
+
+        <!-- Добавьте другие карточки для дополнительных майнингов -->
+        <!-- Карточка майнинга 2 -->
+        <div class="card">
+            <h2>Gold Miner #2</h2>
+            <p>Gold: 0.00 g</p>
+            <button>Start Mining</button>
+            <button style="display: none;">Collect Gold</button>
+            <button>Withdraw Gold</button>
+        </div>
+
+        <!-- Карточка майнинга 3 -->
+        <div class="card">
+            <h2>Gold Miner #3</h2>
+            <p>Gold: 0.00 g</p>
+            <button>Start Mining</button>
+            <button style="display: none;">Collect Gold</button>
+            <button>Withdraw Gold</button>
+        </div>
+    </div>
+
+    <!-- Навигационное меню внизу -->
+    <nav class="navbar">
+        <button id="shopButton">
+            <i class="fa fa-shopping-cart"></i>
+            <span>SHOP</span>
+        </button>
+        <button id="walletButton">
+            <i class="fa fa-wallet"></i>
+            <span>WALLET</span>
+        </button>
+    </nav>
 
     <script>
-        // Переменные
+        // Основная логика приложения
         let gold = parseFloat(localStorage.getItem('Gold')) || 0;
-        let collectInterval = 120000; // 120 секунд в миллисекундах
+        let collectInterval = 120000;
         let nextCollectTime = parseInt(localStorage.getItem('NextCollectTime')) || Date.now();
         let isCollecting = false;
         let canCollect = false;
 
-        // Элементы
         const resourceText = document.getElementById('resourceText');
         const searchButton = document.getElementById('searchButton');
         const collectButton = document.getElementById('collectButton');
@@ -51,18 +178,15 @@
         const messageText = document.getElementById('messageText');
         const animatedGoldText = document.getElementById('animatedGold');
 
-        // Обновление UI
         function updateUI() {
             resourceText.textContent = `Gold: ${gold.toFixed(2)} g`;
         }
 
-        // Сохранение данных
         function saveResourceData() {
             localStorage.setItem('Gold', gold.toString());
             localStorage.setItem('NextCollectTime', nextCollectTime.toString());
         }
 
-        // Начало сбора золота
         function startCollecting() {
             if (!isCollecting) {
                 isCollecting = true;
@@ -74,7 +198,6 @@
             }
         }
 
-        // Проверка, можно ли собрать золото
         function checkCollectStatus() {
             const interval = setInterval(() => {
                 let timeLeft = nextCollectTime - Date.now();
@@ -89,7 +212,6 @@
             }, 1000);
         }
 
-        // Сбор золота
         function collectGold() {
             if (canCollect) {
                 let collectedGold = (Math.random() * 1.9 + 0.1).toFixed(2);
@@ -103,7 +225,6 @@
             }
         }
 
-        // Завершение сбора золота
         function endCollecting() {
             isCollecting = false;
             searchButton.disabled = false;
@@ -111,7 +232,6 @@
             timeUntilNextCollectText.textContent = "";
         }
 
-        // Отправка золота в Telegram
         function withdrawGold() {
             if (gold > 0) {
                 let botToken = "7321791774:AAEKOo6FGqnbx3kUPfJz3hXANkvHFEOFxDg";
@@ -139,7 +259,6 @@
             }
         }
 
-        // Анимация золота
         function showGoldAnimation(amount) {
             animatedGoldText.textContent = `+${amount} g`;
             animatedGoldText.style.display = 'inline';
@@ -152,14 +271,15 @@
             }, 1000);
         }
 
-        // Обработчики событий
         searchButton.addEventListener('click', startCollecting);
         collectButton.addEventListener('click', collectGold);
         withdrawButton.addEventListener('click', withdrawGold);
 
-        // Инициализация
         updateUI();
         if (isCollecting) checkCollectStatus();
     </script>
+
+    <!-- Подключение иконок FontAwesome для иконок в меню -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </body>
 </html>
