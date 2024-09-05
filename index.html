@@ -55,7 +55,7 @@
             align-items: center;
             padding: 20px;
             width: 400px;
-            height: 150px;
+            height: 200px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             position: relative;
         }
@@ -72,6 +72,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            align-items: center;
         }
 
         .card h2 {
@@ -90,6 +91,18 @@
             font-weight: bold;
         }
 
+        .timer {
+            font-size: 1em;
+            color: #1e1e2f;
+            background-color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            text-align: center;
+            width: 80%;
+            font-weight: bold;
+        }
+
         .card button {
             background-color: #00adb5;
             border: none;
@@ -97,9 +110,13 @@
             border-radius: 5px;
             color: #ffffff;
             cursor: pointer;
-            margin-top: 5px;
+            margin-top: auto;
             transition: 0.3s;
             font-size: 0.9em;
+            align-self: center;
+            position: absolute;
+            bottom: 10px;
+            width: 80%;
         }
 
         .card button:hover {
@@ -144,11 +161,6 @@
             color: #ffd700;
             font-size: 1.2em;
             display: none;
-        }
-
-        .timer {
-            font-size: 0.9em;
-            color: #ffd700;
         }
     </style>
 </head>
@@ -195,6 +207,7 @@
                 isCollecting = true;
                 timer = 120; // Таймер на 2 минуты (120 секунд)
                 collectButton.disabled = true; // Блокируем кнопку до завершения таймера
+                timerDisplay.textContent = "Идёт добыча";
                 updateTimer();
 
                 const countdown = setInterval(() => {
@@ -207,12 +220,14 @@
                         isCollecting = false;
                         collectButton.disabled = false; // Разблокируем кнопку после окончания таймера
                         collectButton.textContent = "Получить золото";
+                        timerDisplay.textContent = "Готово к сбору!";
                     }
                 }, 1000);
             } else if (canCollect) {
                 collectGold();
                 canCollect = false;
                 collectButton.textContent = "Добывать";
+                timerDisplay.textContent = "Идёт добыча";
             }
         }
 
@@ -224,7 +239,7 @@
         }
 
         function updateTimer() {
-            timerDisplay.textContent = `Time until next collect: ${timer}s`;
+            timerDisplay.textContent = timer > 0 ? `Идёт добыча: ${timer}s` : "Готово к сбору!";
         }
 
         function showGoldAnimation(collectedGold) {
