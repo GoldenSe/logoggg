@@ -2,14 +2,164 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Repository</title>
+    <title>Gold Collector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px;
+        }
+
+        #animatedGold {
+            position: absolute;
+            transition: all 1s ease-in-out;
+            opacity: 0;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to the File Repository</h1>
-    <p>Click the links below to access the files:</p>
-    <ul>
-        <li><a href="https://drive.google.com/drive/folders/17NWvQ1wM_L5yTi9Gnsl2h6zwvi1iTyDQ?usp=drive_link" target="_blank">Download Files from Google Drive</a></li>
-    </ul>
+    <h1>Gold Collector</h1>
+    <p id="resourceText">Gold: 0.00 g</p>
+    <button id="searchButton">Start Collecting</button>
+    <button id="collectButton" style="display: none;">Collect Gold</button>
+    <button id="withdrawButton">Withdraw Gold</button>
+    <p id="timeUntilNextCollectText"></p>
+    <p id="messageText"></p>
+    <span id="animatedGold" style="display: none;">+0.00 g</span>
+
+    <script>
+        // Переменные
+        let gold = parseFloat(localStorage.getItem('Gold')) || 0;
+        let collectInterval = 120000; // 120 секунд в миллисекундах
+        let nextCollectTime = parseInt(localStorage.getItem('NextCollectTime')) || Date.now();
+        let isCollecting = false;
+        let canCollect = false;
+
+        // Элементы
+        const resourceText = document.getElementById('resourceText');
+        const searchButton = document.getElementById('searchButton');
+        const collectButton = document.getElementById('collectButton');
+        const withdrawButton = document.getElementById('withdrawButton');
+        const timeUntilNextCollectText = document.getElementById('timeUntilNextCollectText');
+        const messageText = document.getElementById('messageText');
+        const animatedGoldText = document.getElementById('animatedGold');
+
+        // Обновление UI
+        function updateUI() {
+            resourceText.textContent = `Gold: ${gold.toFixed(2)} g`;
+        }
+
+        // Сохранение данных
+        function saveResourceData() {
+            localStorage.setItem('Gold', gold.toString());
+            localStorage.setItem('NextCollectTime', nextCollectTime.toString());
+        }
+
+        // Начало сбора золота
+        function startCollecting() {
+            if (!isCollecting) {
+                isCollecting = true;
+                nextCollectTime = Date.now() + collectInterval;
+                searchButton.disabled = true;
+                messageText.textContent = "Collecting gold...";
+                updateUI();
+                checkCollectStatus();
+            }
+        }
+
+        // Проверка, можно ли собрать золото
+        function checkCollectStatus() {
+            const interval = setInterval(() => {
+                let timeLeft = nextCollectTime - Date.now();
+                if (timeLeft <= 0) {
+                    clearInterval(interval);
+                    canCollect = true;
+                    collectButton.style.display = 'inline-block';
+                    timeUntilNextCollectText.textContent = "You can now collect gold!";
+                } else {
+                    timeUntilNextCollectText.textContent = `Time until next collect: ${Math.ceil(timeLeft / 1000)}s`;
+                }
+            }, 1000);
+        }
+
+        // Сбор золота
+        function collectGold() {
+            if (canCollect) {
+                let collectedGold = (Math.random() * 1.9 + 0.1).toFixed(2);
+                gold += parseFloat(collectedGold);
+                showGoldAnimation(collectedGold);
+                canCollect = false;
+                collectButton.style.display = 'none';
+                saveResourceData();
+                updateUI();
+                endCollecting();
+            }
+        }
+
+        // Завершение сбора золота
+        function endCollecting() {
+            isCollecting = false;
+            searchButton.disabled = false;
+            messageText.textContent = "Collecting finished. You can start collecting again.";
+            timeUntilNextCollectText.textContent = "";
+        }
+
+        // Отправка золота в Telegram
+        function withdrawGold() {
+            if (gold > 0) {
+                let botToken = "7321791774:AAEKOo6FGqnbx3kUPfJz3hXANkvHFEOFxDg";
+                let chatId = "-1002246889202";
+                let userId = "user123";
+                let message = `Gold withdrawal request from user ${userId}: ${gold.toFixed(2)} grams of gold.`;
+
+                fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`)
+                    .then(response => {
+                        if (response.ok) {
+                            gold = 0;
+                            saveResourceData();
+                            updateUI();
+                            messageText.textContent = `Gold successfully sent: ${gold.toFixed(2)} grams.`;
+                        } else {
+                            messageText.textContent = "Error sending gold. Please try again.";
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        messageText.textContent = "Error sending gold. Please try again.";
+                    });
+            } else {
+                messageText.textContent = "No gold available for withdrawal.";
+            }
+        }
+
+        // Анимация золота
+        function showGoldAnimation(amount) {
+            animatedGoldText.textContent = `+${amount} g`;
+            animatedGoldText.style.display = 'inline';
+            animatedGoldText.style.opacity = '1';
+            animatedGoldText.style.transform = 'translateY(-50px)';
+            setTimeout(() => {
+                animatedGoldText.style.opacity = '0';
+                animatedGoldText.style.transform = 'translateY(0)';
+                setTimeout(() => animatedGoldText.style.display = 'none', 1000);
+            }, 1000);
+        }
+
+        // Обработчики событий
+        searchButton.addEventListener('click', startCollecting);
+        collectButton.addEventListener('click', collectGold);
+        withdrawButton.addEventListener('click', withdrawGold);
+
+        // Инициализация
+        updateUI();
+        if (isCollecting) checkCollectStatus();
+    </script>
 </body>
 </html>
