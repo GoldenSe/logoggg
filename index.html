@@ -54,14 +54,15 @@
             flex-direction: row;
             align-items: center;
             padding: 20px;
-            width: 350px;
+            width: 400px;
+            height: 150px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             position: relative;
         }
 
         .card img {
-            width: 100px;
-            height: 100px;
+            width: 120px;
+            height: 120px;
             border-radius: 8px;
             margin-right: 15px;
             object-fit: cover;
@@ -92,7 +93,7 @@
         .card button {
             background-color: #00adb5;
             border: none;
-            padding: 8px;
+            padding: 10px;
             border-radius: 5px;
             color: #ffffff;
             cursor: pointer;
@@ -120,9 +121,15 @@
             background: none;
             border: none;
             color: #ffffff;
-            font-size: 1.2em;
+            font-size: 1.5em;
             cursor: pointer;
             transition: color 0.3s;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
         }
 
         .navbar button:hover {
@@ -138,6 +145,11 @@
             font-size: 1.2em;
             display: none;
         }
+
+        .timer {
+            font-size: 0.9em;
+            color: #ffd700;
+        }
     </style>
 </head>
 <body>
@@ -147,7 +159,7 @@
     </div>
 
     <div class="container" id="miningContainer">
-        <!-- Карточки майнинга -->
+        <!-- Карточка майнинга -->
         <div class="card">
             <img src="Land.png" alt="Land">
             <div class="card-content">
@@ -155,17 +167,15 @@
                 <p>Уровень: 1</p>
                 <p>Редкость: Промо</p>
                 <p>Активность: <span class="active-status">Активна</span></p>
-                <button onclick="startCollecting()">Collect</button>
-                <button onclick="withdrawGold()">Withdraw</button>
+                <div class="timer" id="timer">Time until next collect: 0s</div>
+                <button id="collectButton" onclick="startCollecting()">Добывать</button>
             </div>
         </div>
-
-        <!-- Можно добавить другие карточки аналогично -->
     </div>
 
     <div class="navbar">
-        <button><i class="fas fa-shopping-cart"></i> SHOP</button>
-        <button><i class="fas fa-wallet"></i> WALLET</button>
+        <button><i class="fas fa-shopping-cart"></i></button>
+        <button><i class="fas fa-wallet"></i></button>
     </div>
 
     <div id="animatedGoldText" class="animated-gold-text">+0.00 g</div>
@@ -173,30 +183,48 @@
     <script>
         let gold = 0;
         let isCollecting = false;
+        let canCollect = false;
         const goldText = document.getElementById('goldText');
         const animatedGoldText = document.getElementById('animatedGoldText');
+        const timerDisplay = document.getElementById('timer');
+        const collectButton = document.getElementById('collectButton');
+        let timer = 0;
 
         function startCollecting() {
-            if (!isCollecting) {
+            if (!isCollecting && !canCollect) {
                 isCollecting = true;
-                setTimeout(() => {
-                    const collectedGold = Math.random() * 2 + 0.1; // Добыча от 0.1 до 2 грамм
-                    gold += collectedGold;
-                    showGoldAnimation(collectedGold.toFixed(2));
-                    updateUI();
-                    isCollecting = false;
-                }, 2000); // Симулируем сбор за 2 секунды
+                timer = 120; // Таймер на 2 минуты (120 секунд)
+                collectButton.disabled = true; // Блокируем кнопку до завершения таймера
+                updateTimer();
+
+                const countdown = setInterval(() => {
+                    timer--;
+                    updateTimer();
+
+                    if (timer <= 0) {
+                        clearInterval(countdown);
+                        canCollect = true;
+                        isCollecting = false;
+                        collectButton.disabled = false; // Разблокируем кнопку после окончания таймера
+                        collectButton.textContent = "Получить золото";
+                    }
+                }, 1000);
+            } else if (canCollect) {
+                collectGold();
+                canCollect = false;
+                collectButton.textContent = "Добывать";
             }
         }
 
-        function withdrawGold() {
-            if (gold > 0) {
-                alert(`Gold successfully sent: ${gold.toFixed(2)} grams.`);
-                gold = 0;
-                updateUI();
-            } else {
-                alert("No gold available for withdrawal.");
-            }
+        function collectGold() {
+            const collectedGold = Math.random() * 2 + 0.1; // Добыча от 0.1 до 2 грамм
+            gold += collectedGold;
+            showGoldAnimation(collectedGold.toFixed(2));
+            updateUI();
+        }
+
+        function updateTimer() {
+            timerDisplay.textContent = `Time until next collect: ${timer}s`;
         }
 
         function showGoldAnimation(collectedGold) {
