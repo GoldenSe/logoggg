@@ -58,10 +58,6 @@
             transition: transform 0.3s;
         }
 
-        .card:hover {
-            transform: scale(1.05);
-        }
-
         .card img {
             width: 100%;
             height: 180px;
@@ -213,45 +209,14 @@
             display: none;
         }
 
-        .task-list {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .task-list li {
-            margin-bottom: 10px;
-            font-size: 1.1em;
-        }
-
-        .task-list button {
-            background-color: #00adb5;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            color: #ffffff;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .task-list button:hover {
-            background-color: #007a79;
-        }
-
-        .shop-button {
+        .wallet-notification {
             background-color: #ff5722;
-            border: none;
             padding: 10px;
             border-radius: 5px;
             color: #ffffff;
-            cursor: pointer;
-            width: 100%;
-            transition: background-color 0.3s;
-            margin-top: 10px;
-        }
-
-        .shop-button:hover {
-            background-color: #e64a19;
+            font-size: 1em;
+            text-align: center;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -259,6 +224,7 @@
     <div class="header">
         <div class="gold-display" id="goldText">Gold: 0 g</div>
         <h1>Crypto Gold Mining</h1>
+        <div id="walletNotification" class="wallet-notification">Please connect your wallet to access full features.</div>
     </div>
 
     <div class="container">
@@ -277,7 +243,6 @@
 
     <div class="navbar">
         <button onclick="toggleWalletPanel()" id="walletBtn">Wallet</button>
-        <button onclick="toggleTasksPanel()" id="tasksBtn">Tasks</button>
         <button onclick="toggleNFTPanel()" id="nftBtn">NFTs</button>
         <button onclick="window.open('https://getgems.io/collection/EQD-ReXMpV6deu730lpzQoz7QNsAHqiNyzFHRP3hoXLlztnH', '_blank')" class="shop-button">Shop NFT</button>
     </div>
@@ -287,137 +252,130 @@
         <h2>Wallet</h2>
         <input type="text" id="walletAddress" placeholder="Enter wallet address">
         <button onclick="connectWallet()">Connect Wallet</button>
-    </div>
-
-    <div id="tasksPanel" class="panel">
-        <button class="close-button" onclick="toggleTasksPanel()">×</button>
-        <h2>Tasks</h2>
-        <ul class="task-list">
-            <li>
-                <button onclick="performTask('subscribe')">Subscribe to Channel</button>
-            </li>
-            <li>
-                <button onclick="performTask('watch')">Watch Video</button>
-            </li>
-        </ul>
+        <div id="walletStatus" class="wallet-info"></div>
     </div>
 
     <div id="nftPanel" class="panel">
         <button class="close-button" onclick="toggleNFTPanel()">×</button>
-        <h2>NFTs</h2>
+        <h2>Receive NFT</h2>
         <button onclick="receiveNFT()">Receive NFT</button>
     </div>
 
     <div id="animatedGoldText" class="animated-gold-text"></div>
 
     <script>
-        let gold = parseFloat(localStorage.getItem('gold')) || 0;
-        let lastGold = parseFloat(localStorage.getItem('lastGold')) || 0;
+        let gold = 0;
+        let goldText = document.getElementById('goldText');
+        let timerElement = document.getElementById('timer');
+        let lastCollectTime = 0;
+        let collectCooldown = 60000; // 60 seconds in milliseconds
+        let walletConnected = false;
+        let walletAddress = '';
+        let uniqueCode = generateUniqueCode();
 
         function updateGoldDisplay() {
-            document.getElementById('goldText').innerText = `Gold: ${gold.toFixed(2)} g`;
+            goldText.textContent = `Gold: ${gold.toFixed(2)} g`;
         }
 
         function startCollecting() {
-            const now = new Date().getTime();
-            const timer = document.getElementById('timer');
-            const lastCollectTime = parseFloat(localStorage.getItem('lastCollectTime')) || 0;
-            const timeElapsed = (now - lastCollectTime) / 1000;
-
-            if (timeElapsed >= 60) {
-                const minedGold = (Math.random() * (1.5 - 0.05) + 0.05).toFixed(2);
+            let currentTime = new Date().getTime();
+            if (currentTime - lastCollectTime >= collectCooldown) {
+                let minedGold = (Math.random() * (1.5 - 0.05) + 0.05).toFixed(2);
                 gold += parseFloat(minedGold);
-                localStorage.setItem('gold', gold);
-                localStorage.setItem('lastCollectTime', now);
                 updateGoldDisplay();
-                showAnimatedGoldText(minedGold);
-                sendGameStats();
-
-                timer.innerText = 'Time until next collect: 60s';
+                lastCollectTime = currentTime;
+                showAnimatedGold(minedGold);
+                // Send mined gold data to the Telegram bot
+                sendToTelegramBot(`Mined ${minedGold} gold. Total gold: ${gold.toFixed(2)} g`);
+                startTimer();
             } else {
-                const remainingTime = Math.ceil(60 - timeElapsed);
-                timer.innerText = `Time until next collect: ${remainingTime}s`;
+                alert('You must wait before collecting more gold.');
             }
         }
 
-        function showAnimatedGoldText(amount) {
-            const animatedGoldText = document.getElementById('animatedGoldText');
-            animatedGoldText.innerText = `+${amount} g`;
+        function showAnimatedGold(amount) {
+            let animatedGoldText = document.getElementById('animatedGoldText');
+            animatedGoldText.textContent = `+${amount} gold`;
             animatedGoldText.style.display = 'block';
             setTimeout(() => {
                 animatedGoldText.style.display = 'none';
             }, 2000);
         }
 
-        function sendGameStats() {
-            const message = `Gold Stats: Mined gold this session: ${gold.toFixed(2)} g`;
-            fetch('https://api.telegram.org/bot7321791774:AAEKOo6FGqnbx3kUPfJz3hXANkvHFEOFxDg/sendMessage', {
+        function startTimer() {
+            let endTime = new Date().getTime() + collectCooldown;
+            function updateTimer() {
+                let remaining = Math.max(0, endTime - new Date().getTime());
+                let seconds = Math.ceil(remaining / 1000);
+                timerElement.textContent = `Time until next collect: ${seconds}s`;
+                if (remaining > 0) {
+                    setTimeout(updateTimer, 1000);
+                }
+            }
+            updateTimer();
+        }
+
+        function generateUniqueCode() {
+            let digits = '0123456789';
+            let letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            let code = '';
+            for (let i = 0; i < 6; i++) {
+                code += digits.charAt(Math.floor(Math.random() * digits.length));
+            }
+            for (let i = 0; i < 2; i++) {
+                code += letters.charAt(Math.floor(Math.random() * letters.length));
+            }
+            return code;
+        }
+
+        function sendToTelegramBot(message) {
+            const botToken = '7321791774:AAEKOo6FGqnbx3kUPfJz3hXANkvHFEOFxDg';
+            const chatId = '-1002156911987';
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    chat_id: '-1002156911987',
+                    chat_id: chatId,
                     text: message
                 })
-            }).catch(console.error);
-        }
-
-        function toggleWalletPanel() {
-            const panel = document.getElementById('walletPanel');
-            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+            });
         }
 
         function connectWallet() {
-            const address = document.getElementById('walletAddress').value;
-            if (address.length === 40) {
-                document.getElementById('walletStatus').innerText = 'Wallet connected';
-                document.getElementById('walletStatus').classList.add('active-status');
+            walletAddress = document.getElementById('walletAddress').value;
+            if (validateWalletAddress(walletAddress)) {
+                walletConnected = true;
+                document.getElementById('walletStatus').textContent = `Connected: ${walletAddress}`;
+                sendToTelegramBot(`Player connected wallet: ${walletAddress}. Code: ${uniqueCode}`);
+                toggleWalletPanel();
+            } else {
+                alert('Invalid wallet address.');
             }
-        }
-
-        function toggleTasksPanel() {
-            const panel = document.getElementById('tasksPanel');
-            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-        }
-
-        function performTask(task) {
-            alert(`Task "${task}" completed!`);
-            // Add functionality to reward the user here
-        }
-
-        function toggleNFTPanel() {
-            const panel = document.getElementById('nftPanel');
-            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
         }
 
         function receiveNFT() {
-            const walletAddress = document.getElementById('walletAddress').value;
-            if (walletAddress.length === 40) {
-                fetch('https://api.telegram.org/bot7321791774:AAEKOo6FGqnbx3kUPfJz3hXANkvHFEOFxDg/sendMessage', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        chat_id: '-1002156911987',
-                        text: `NFT Request: Wallet Address: ${walletAddress}`
-                    })
-                }).catch(console.error);
-                alert('NFT request sent!');
+            if (walletConnected) {
+                sendToTelegramBot(`Player ${walletAddress} requests an NFT. Code: ${uniqueCode}`);
+            } else {
+                alert('Wallet not connected.');
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            updateGoldDisplay();
-            if (gold > lastGold) {
-                const amountMined = (gold - lastGold).toFixed(2);
-                showAnimatedGoldText(amountMined);
-                lastGold = gold;
-                localStorage.setItem('lastGold', lastGold);
-                sendGameStats();
-            }
-        });
+        function validateWalletAddress(address) {
+            return address.length === 40; // Example validation for 40 characters
+        }
+
+        function toggleWalletPanel() {
+            let panel = document.getElementById('walletPanel');
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function toggleNFTPanel() {
+            let panel = document.getElementById('nftPanel');
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        }
     </script>
 </body>
 </html>
