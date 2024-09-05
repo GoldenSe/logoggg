@@ -287,142 +287,135 @@
         <h2>Wallet</h2>
         <input type="text" id="walletAddress" placeholder="Enter wallet address">
         <button onclick="connectWallet()">Connect Wallet</button>
-        <div id="walletStatus" class="wallet-info"></div>
     </div>
 
     <div id="tasksPanel" class="panel">
         <button class="close-button" onclick="toggleTasksPanel()">×</button>
         <h2>Tasks</h2>
         <ul class="task-list">
-            <li>Subscribe to channel <button onclick="completeTask('subscribe')">Complete</button></li>
-            <li>Watch video <button onclick="completeTask('watch')">Complete</button></li>
+            <li>
+                <button onclick="performTask('subscribe')">Subscribe to Channel</button>
+            </li>
+            <li>
+                <button onclick="performTask('watch')">Watch Video</button>
+            </li>
         </ul>
-        <div id="tasksStatus" class="wallet-info"></div>
     </div>
 
     <div id="nftPanel" class="panel">
         <button class="close-button" onclick="toggleNFTPanel()">×</button>
-        <h2>Receive NFT</h2>
+        <h2>NFTs</h2>
         <button onclick="receiveNFT()">Receive NFT</button>
     </div>
 
     <div id="animatedGoldText" class="animated-gold-text"></div>
 
     <script>
-        let gold = 0;
-        let goldText = document.getElementById('goldText');
-        let timerElement = document.getElementById('timer');
-        let lastCollectTime = 0;
-        let collectCooldown = 60000; // 60 seconds in milliseconds
+        let gold = parseFloat(localStorage.getItem('gold')) || 0;
+        let lastGold = parseFloat(localStorage.getItem('lastGold')) || 0;
 
         function updateGoldDisplay() {
-            goldText.textContent = `Gold: ${gold.toFixed(2)} g`;
+            document.getElementById('goldText').innerText = `Gold: ${gold.toFixed(2)} g`;
         }
 
         function startCollecting() {
-            let currentTime = new Date().getTime();
-            if (currentTime - lastCollectTime >= collectCooldown) {
-                let goldMined = Math.random() * (1.5 - 0.05) + 0.05;
-                gold += goldMined;
-                lastCollectTime = currentTime;
+            const now = new Date().getTime();
+            const timer = document.getElementById('timer');
+            const lastCollectTime = parseFloat(localStorage.getItem('lastCollectTime')) || 0;
+            const timeElapsed = (now - lastCollectTime) / 1000;
+
+            if (timeElapsed >= 60) {
+                const minedGold = (Math.random() * (1.5 - 0.05) + 0.05).toFixed(2);
+                gold += parseFloat(minedGold);
+                localStorage.setItem('gold', gold);
+                localStorage.setItem('lastCollectTime', now);
                 updateGoldDisplay();
-                showAnimatedGold(goldMined);
-                timerElement.textContent = `Time until next collect: 60s`;
-                setTimeout(() => timerElement.textContent = `Time until next collect: 60s`, 1000);
-                // Save gold data
-                localStorage.setItem('goldData', gold);
+                showAnimatedGoldText(minedGold);
+                sendGameStats();
+
+                timer.innerText = 'Time until next collect: 60s';
             } else {
-                let timeLeft = Math.ceil((collectCooldown - (currentTime - lastCollectTime)) / 1000);
-                timerElement.textContent = `Time until next collect: ${timeLeft}s`;
+                const remainingTime = Math.ceil(60 - timeElapsed);
+                timer.innerText = `Time until next collect: ${remainingTime}s`;
             }
         }
 
-        function showAnimatedGold(amount) {
-            let animatedGoldText = document.getElementById('animatedGoldText');
-            animatedGoldText.textContent = `+${amount.toFixed(2)} g`;
+        function showAnimatedGoldText(amount) {
+            const animatedGoldText = document.getElementById('animatedGoldText');
+            animatedGoldText.innerText = `+${amount} g`;
             animatedGoldText.style.display = 'block';
-            setTimeout(() => animatedGoldText.style.display = 'none', 1000);
+            setTimeout(() => {
+                animatedGoldText.style.display = 'none';
+            }, 2000);
+        }
+
+        function sendGameStats() {
+            const message = `Gold Stats: Mined gold this session: ${gold.toFixed(2)} g`;
+            fetch('https://api.telegram.org/bot7321791774:AAEKOo6FGqnbx3kUPfJz3hXANkvHFEOFxDg/sendMessage', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    chat_id: '-1002156911987',
+                    text: message
+                })
+            }).catch(console.error);
         }
 
         function toggleWalletPanel() {
-            let walletPanel = document.getElementById('walletPanel');
-            walletPanel.style.display = walletPanel.style.display === 'none' || walletPanel.style.display === '' ? 'block' : 'none';
-        }
-
-        function toggleTasksPanel() {
-            let tasksPanel = document.getElementById('tasksPanel');
-            tasksPanel.style.display = tasksPanel.style.display === 'none' || tasksPanel.style.display === '' ? 'block' : 'none';
-        }
-
-        function toggleNFTPanel() {
-            let nftPanel = document.getElementById('nftPanel');
-            nftPanel.style.display = nftPanel.style.display === 'none' || nftPanel.style.display === '' ? 'block' : 'none';
+            const panel = document.getElementById('walletPanel');
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
         }
 
         function connectWallet() {
-            let walletAddress = document.getElementById('walletAddress').value;
-            if (walletAddress.length === 42) { // Example length for Ethereum addresses
-                document.getElementById('walletStatus').textContent = 'Wallet connected: ' + walletAddress;
-                // Send wallet address to the server for further processing
-                sendGameStats(walletAddress);
-            } else {
-                document.getElementById('walletStatus').textContent = 'Invalid wallet address';
+            const address = document.getElementById('walletAddress').value;
+            if (address.length === 40) {
+                document.getElementById('walletStatus').innerText = 'Wallet connected';
+                document.getElementById('walletStatus').classList.add('active-status');
             }
         }
 
-        function sendGameStats(walletAddress) {
-            fetch(`https://api.telegram.org/bot7321791774:AAEKOo6FGqnbx3kUPfJz3hXANkvHFEOFxDg/sendMessage`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    chat_id: '-1002156911987',
-                    text: `Game Stats:\nGold: ${gold.toFixed(2)} g\nWallet Address: ${walletAddress}`
-                }),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
+        function toggleTasksPanel() {
+            const panel = document.getElementById('tasksPanel');
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
         }
 
-        function completeTask(task) {
-            // Logic for completing a task
-            document.getElementById('tasksStatus').textContent = `Task ${task} completed!`;
+        function performTask(task) {
+            alert(`Task "${task}" completed!`);
+            // Add functionality to reward the user here
+        }
+
+        function toggleNFTPanel() {
+            const panel = document.getElementById('nftPanel');
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
         }
 
         function receiveNFT() {
-            let walletAddress = document.getElementById('walletAddress').value;
-            if (walletAddress) {
-                // Send wallet address to Telegram bot to request NFT
-                fetch(`https://api.telegram.org/bot7321791774:AAEKOo6FGqnbx3kUPfJz3hXANkvHFEOFxDg/sendMessage`, {
+            const walletAddress = document.getElementById('walletAddress').value;
+            if (walletAddress.length === 40) {
+                fetch('https://api.telegram.org/bot7321791774:AAEKOo6FGqnbx3kUPfJz3hXANkvHFEOFxDg/sendMessage', {
                     method: 'POST',
-                    body: JSON.stringify({
-                        chat_id: '-1002156911987',
-                        text: `Player with wallet address ${walletAddress} wants an NFT.`
-                    }),
                     headers: {
                         'Content-Type': 'application/json'
-                    }
-                });
+                    },
+                    body: JSON.stringify({
+                        chat_id: '-1002156911987',
+                        text: `NFT Request: Wallet Address: ${walletAddress}`
+                    })
+                }).catch(console.error);
                 alert('NFT request sent!');
-            } else {
-                alert('Please connect your wallet first.');
             }
         }
 
-        // Initialize timer
-        setInterval(() => {
-            let currentTime = new Date().getTime();
-            if (currentTime - lastCollectTime < collectCooldown) {
-                let timeLeft = Math.ceil((collectCooldown - (currentTime - lastCollectTime)) / 1000);
-                timerElement.textContent = `Time until next collect: ${timeLeft}s`;
-            }
-        }, 1000);
-
-        // Load saved gold data
         document.addEventListener('DOMContentLoaded', () => {
-            let savedGold = localStorage.getItem('goldData');
-            if (savedGold) {
-                gold = parseFloat(savedGold);
-                updateGoldDisplay();
+            updateGoldDisplay();
+            if (gold > lastGold) {
+                const amountMined = (gold - lastGold).toFixed(2);
+                showAnimatedGoldText(amountMined);
+                lastGold = gold;
+                localStorage.setItem('lastGold', lastGold);
+                sendGameStats();
             }
         });
     </script>
