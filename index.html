@@ -22,62 +22,86 @@
             padding: 20px;
             text-align: center;
             background-color: #292b4d;
+            position: relative;
+        }
+
+        .gold-display {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 1.2em;
         }
 
         .container {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 90%;
-            max-width: 800px;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
             margin-top: 20px;
+            width: 90%;
+            max-width: 1200px;
         }
 
         .card {
             background: #2b2e4a;
             border-radius: 10px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
             padding: 20px;
-            width: 100%;
-            margin-bottom: 20px;
+            width: 350px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             position: relative;
         }
 
+        .card img {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            margin-right: 15px;
+        }
+
+        .card-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
         .card h2 {
-            margin: 0 0 10px;
-            font-size: 1.5em;
+            margin: 0 0 5px;
+            font-size: 1.2em;
             color: #ffd700;
         }
 
         .card p {
-            margin: 5px 0;
+            margin: 3px 0;
+            font-size: 0.9em;
+        }
+
+        .active-status {
+            color: #00ff00;
+            font-weight: bold;
         }
 
         .card button {
             background-color: #00adb5;
             border: none;
-            padding: 10px;
+            padding: 8px;
             border-radius: 5px;
             color: #ffffff;
             cursor: pointer;
-            margin-top: 10px;
-            width: 100%;
+            margin-top: 5px;
             transition: 0.3s;
+            font-size: 0.9em;
         }
 
         .card button:hover {
             background-color: #007a79;
-        }
-
-        #animatedGold {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #ffd700;
-            font-weight: bold;
-            transition: all 1s ease-in-out;
-            opacity: 0;
         }
 
         .navbar {
@@ -114,39 +138,53 @@
 </head>
 <body>
     <header class="header">
+        <div class="gold-display" id="goldDisplay">
+            Gold: 0.00 g
+        </div>
         <h1>Crypto Gold Mining</h1>
     </header>
 
     <div class="container">
         <!-- Карточка майнинга -->
         <div class="card">
-            <h2>Gold Miner #1</h2>
-            <p id="resourceText">Gold: 0.00 g</p>
-            <p id="timeUntilNextCollectText"></p>
-            <button id="searchButton">Start Mining</button>
-            <button id="collectButton" style="display: none;">Collect Gold</button>
-            <button id="withdrawButton">Withdraw Gold</button>
-            <p id="messageText"></p>
+            <img src="land.png" alt="Land">
+            <div class="card-content">
+                <h2>Кирка Промо</h2>
+                <p>Уровень: 1</p>
+                <p>Редкость: Промо</p>
+                <p>Активность: <span class="active-status">Активна</span></p>
+                <button id="searchButton">Начать майнинг</button>
+                <button id="collectButton" style="display: none;">Собрать золото</button>
+                <button id="withdrawButton">Вывести золото</button>
+            </div>
             <span id="animatedGold" style="display: none;">+0.00 g</span>
         </div>
 
         <!-- Добавьте другие карточки для дополнительных майнингов -->
-        <!-- Карточка майнинга 2 -->
         <div class="card">
-            <h2>Gold Miner #2</h2>
-            <p>Gold: 0.00 g</p>
-            <button>Start Mining</button>
-            <button style="display: none;">Collect Gold</button>
-            <button>Withdraw Gold</button>
+            <img src="land.png" alt="Land">
+            <div class="card-content">
+                <h2>Кирка Промо</h2>
+                <p>Уровень: 1</p>
+                <p>Редкость: Промо</p>
+                <p>Активность: <span class="active-status">Активна</span></p>
+                <button>Начать майнинг</button>
+                <button style="display: none;">Собрать золото</button>
+                <button>Вывести золото</button>
+            </div>
         </div>
 
-        <!-- Карточка майнинга 3 -->
         <div class="card">
-            <h2>Gold Miner #3</h2>
-            <p>Gold: 0.00 g</p>
-            <button>Start Mining</button>
-            <button style="display: none;">Collect Gold</button>
-            <button>Withdraw Gold</button>
+            <img src="land.png" alt="Land">
+            <div class="card-content">
+                <h2>Кирка Промо</h2>
+                <p>Уровень: 1</p>
+                <p>Редкость: Промо</p>
+                <p>Активность: <span class="active-status">Активна</span></p>
+                <button>Начать майнинг</button>
+                <button style="display: none;">Собрать золото</button>
+                <button>Вывести золото</button>
+            </div>
         </div>
     </div>
 
@@ -170,6 +208,7 @@
         let isCollecting = false;
         let canCollect = false;
 
+        const goldDisplay = document.getElementById('goldDisplay');
         const resourceText = document.getElementById('resourceText');
         const searchButton = document.getElementById('searchButton');
         const collectButton = document.getElementById('collectButton');
@@ -179,7 +218,7 @@
         const animatedGoldText = document.getElementById('animatedGold');
 
         function updateUI() {
-            resourceText.textContent = `Gold: ${gold.toFixed(2)} g`;
+            goldDisplay.textContent = `Gold: ${gold.toFixed(2)} g`;
         }
 
         function saveResourceData() {
@@ -225,6 +264,18 @@
             }
         }
 
+        function withdrawGold() {
+            if (gold > 0) {
+                // Реализуйте отправку золота в Telegram или другое действие
+                messageText.textContent = `Gold successfully sent: ${gold.toFixed(2)} grams.`;
+                gold = 0;
+                saveResourceData();
+                updateUI();
+            } else {
+                messageText.textContent = "No gold available for withdrawal.";
+            }
+        }
+
         function endCollecting() {
             isCollecting = false;
             searchButton.disabled = false;
@@ -232,36 +283,9 @@
             timeUntilNextCollectText.textContent = "";
         }
 
-        function withdrawGold() {
-            if (gold > 0) {
-                let botToken = "7321791774:AAEKOo6FGqnbx3kUPfJz3hXANkvHFEOFxDg";
-                let chatId = "-1002246889202";
-                let userId = "user123";
-                let message = `Gold withdrawal request from user ${userId}: ${gold.toFixed(2)} grams of gold.`;
-
-                fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`)
-                    .then(response => {
-                        if (response.ok) {
-                            gold = 0;
-                            saveResourceData();
-                            updateUI();
-                            messageText.textContent = `Gold successfully sent: ${gold.toFixed(2)} grams.`;
-                        } else {
-                            messageText.textContent = "Error sending gold. Please try again.";
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        messageText.textContent = "Error sending gold. Please try again.";
-                    });
-            } else {
-                messageText.textContent = "No gold available for withdrawal.";
-            }
-        }
-
-        function showGoldAnimation(amount) {
-            animatedGoldText.textContent = `+${amount} g`;
+        function showGoldAnimation(collectedGold) {
             animatedGoldText.style.display = 'inline';
+            animatedGoldText.textContent = `+${collectedGold} g`;
             animatedGoldText.style.opacity = '1';
             animatedGoldText.style.transform = 'translateY(-50px)';
             setTimeout(() => {
