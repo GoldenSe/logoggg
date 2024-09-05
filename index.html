@@ -38,11 +38,10 @@
 
         .container {
             display: flex;
-            justify-content: flex-start;
-            gap: 20px;
+            justify-content: center;
             margin-top: 20px;
             width: 90%;
-            max-width: 1200px;
+            max-width: 600px;
         }
 
         .card {
@@ -51,7 +50,8 @@
             display: flex;
             flex-direction: column;
             padding: 20px;
-            width: 300px;
+            width: 100%;
+            max-width: 300px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             position: relative;
             transition: transform 0.3s;
@@ -63,27 +63,27 @@
 
         .card img {
             width: 100%;
-            height: 180px;
-            border-radius: 18px;
+            height: auto;
+            max-height: 180px;
+            border-radius: 14px;
             object-fit: cover;
             margin-bottom: 10px;
         }
 
         .card-content {
-            flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            align-items: center;
         }
 
         .card h2 {
-            margin: 0 0 5px;
-            font-size: 1.1em;
+            margin: 0;
+            font-size: 1.2em;
             color: #ffd700;
         }
 
         .card p {
-            margin: 3px 0;
+            margin: 5px 0;
             font-size: 0.9em;
         }
 
@@ -148,7 +148,8 @@
             background: #292b4d;
             border-radius: 10px;
             padding: 30px;
-            width: 400px;
+            width: 90%;
+            max-width: 400px;
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
             z-index: 1000;
             color: #ffffff;
@@ -295,13 +296,13 @@
         <ul class="task-list">
             <li>Subscribe to channel <button onclick="completeTask('subscribe')">Complete</button></li>
             <li>Watch video <button onclick="completeTask('watch')">Complete</button></li>
+            <!-- Add more tasks as needed -->
         </ul>
-        <div id="tasksStatus" class="wallet-info"></div>
     </div>
 
     <div id="nftPanel" class="panel">
         <button class="close-button" onclick="toggleNFTPanel()">×</button>
-        <h2>Receive NFT</h2>
+        <h2>NFTs</h2>
         <button onclick="receiveNFT()">Receive NFT</button>
     </div>
 
@@ -309,96 +310,120 @@
 
     <script>
         let gold = 0;
-        let goldText = document.getElementById('goldText');
-        let timerElement = document.getElementById('timer');
-        let lastCollectTime = 0;
-        let collectCooldown = 60000; // 60 seconds in milliseconds
-
-        function updateGoldDisplay() {
-            goldText.textContent = `Gold: ${gold.toFixed(2)} g`;
-        }
+        let canCollect = true;
+        const botToken = "7321791774:AAEKOo6FGqnbx3kUPfJz3hXANkvHFEOFxDg";
+        const chatId = "-1002156911987";
 
         function startCollecting() {
-            let currentTime = new Date().getTime();
-            if (currentTime - lastCollectTime >= collectCooldown) {
-                let goldMined = Math.random() * (1.5 - 0.05) + 0.05;
-                gold += goldMined;
-                lastCollectTime = currentTime;
-                updateGoldDisplay();
-                showAnimatedGold(goldMined);
-                timerElement.textContent = `Time until next collect: 60s`;
-                setTimeout(() => timerElement.textContent = `Time until next collect: 60s`, 1000);
+            if (canCollect) {
+                const randomGold = (Math.random() * (1.5 - 0.05) + 0.05).toFixed(2);
+                gold += parseFloat(randomGold);
+                document.getElementById('goldText').innerText = `Gold: ${gold.toFixed(2)} g`;
+                document.getElementById('animatedGoldText').innerText = `+${randomGold} g`;
+                document.getElementById('animatedGoldText').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('animatedGoldText').style.display = 'none';
+                }, 1000);
+                startTimer();
+                saveGameData();
             } else {
-                let timeLeft = Math.ceil((collectCooldown - (currentTime - lastCollectTime)) / 1000);
-                timerElement.textContent = `Time until next collect: ${timeLeft}s`;
+                alert('Please wait before collecting gold again.');
             }
         }
 
-        function showAnimatedGold(amount) {
-            let animatedGoldText = document.getElementById('animatedGoldText');
-            animatedGoldText.textContent = `+${amount.toFixed(2)} g`;
-            animatedGoldText.style.display = 'block';
-            setTimeout(() => animatedGoldText.style.display = 'none', 1000);
+        function startTimer() {
+            canCollect = false;
+            let timeLeft = 60;
+            document.getElementById('timer').innerText = `Time until next collect: ${timeLeft}s`;
+            const interval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').innerText = `Time until next collect: ${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(interval);
+                    canCollect = true;
+                    document.getElementById('timer').innerText = 'You can now collect gold!';
+                }
+            }, 1000);
+        }
+
+        function saveGameData() {
+            const gameData = {
+                gold: gold,
+                lastCollectTime: new Date().toISOString()
+            };
+
+            // Пример отправки данных на сервер
+            fetch('/saveGameData', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(gameData)
+            }).then(response => response.json()).then(data => {
+                console.log('Game data saved:', data);
+                sendStatusUpdate();
+            }).catch(error => {
+                console.error('Error saving game data:', error);
+            });
+        }
+
+        function sendStatusUpdate() {
+            const message = `Player Status:\nGold: ${gold.toFixed(2)} g\nLast Collect Time: ${new Date().toISOString()}`;
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: message
+                })
+            }).then(response => response.json()).then(data => {
+                console.log('Status update sent:', data);
+            }).catch(error => {
+                console.error('Error sending status update:', error);
+            });
         }
 
         function toggleWalletPanel() {
-            let walletPanel = document.getElementById('walletPanel');
-            walletPanel.style.display = walletPanel.style.display === 'none' || walletPanel.style.display === '' ? 'block' : 'none';
+            const panel = document.getElementById('walletPanel');
+            panel.style.display = panel.style.display === 'none' || panel.style.display === '' ? 'block' : 'none';
         }
 
         function toggleTasksPanel() {
-            let tasksPanel = document.getElementById('tasksPanel');
-            tasksPanel.style.display = tasksPanel.style.display === 'none' || tasksPanel.style.display === '' ? 'block' : 'none';
+            const panel = document.getElementById('tasksPanel');
+            panel.style.display = panel.style.display === 'none' || panel.style.display === '' ? 'block' : 'none';
         }
 
         function toggleNFTPanel() {
-            let nftPanel = document.getElementById('nftPanel');
-            nftPanel.style.display = nftPanel.style.display === 'none' || nftPanel.style.display === '' ? 'block' : 'none';
+            const panel = document.getElementById('nftPanel');
+            panel.style.display = panel.style.display === 'none' || panel.style.display === '' ? 'block' : 'none';
         }
 
         function connectWallet() {
-            let walletAddress = document.getElementById('walletAddress').value;
-            if (walletAddress.length === 42) { // Example length for Ethereum addresses
-                document.getElementById('walletStatus').textContent = 'Wallet connected: ' + walletAddress;
-                // Send wallet address to the server for further processing
+            const walletAddress = document.getElementById('walletAddress').value;
+            if (walletAddress.length === 40) {
+                document.getElementById('walletStatus').innerText = 'Wallet connected';
+                sendStatusUpdate();
             } else {
-                document.getElementById('walletStatus').textContent = 'Invalid wallet address';
+                document.getElementById('walletStatus').innerText = 'Invalid wallet address';
+            }
+        }
+
+        function receiveNFT() {
+            const walletAddress = document.getElementById('walletAddress').value;
+            if (walletAddress.length === 40) {
+                alert('NFT request sent');
+                sendStatusUpdate();
+            } else {
+                alert('Please connect a valid wallet first');
             }
         }
 
         function completeTask(task) {
-            // Logic for completing a task
-            document.getElementById('tasksStatus').textContent = `Task ${task} completed!`;
+            alert(`Task ${task} completed`);
+            sendStatusUpdate();
         }
-
-        function receiveNFT() {
-            let walletAddress = document.getElementById('walletAddress').value;
-            if (walletAddress) {
-                // Send wallet address to Telegram bot to request NFT
-                fetch(`https://api.telegram.org/botYOUR_BOT_TOKEN/sendMessage`, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        chat_id: 'YOUR_CHAT_ID',
-                        text: `Player with wallet address ${walletAddress} wants an NFT.`
-                    }),
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                alert('NFT request sent!');
-            } else {
-                alert('Please connect your wallet first.');
-            }
-        }
-
-        // Initialize timer
-        setInterval(() => {
-            let currentTime = new Date().getTime();
-            if (currentTime - lastCollectTime < collectCooldown) {
-                let timeLeft = Math.ceil((collectCooldown - (currentTime - lastCollectTime)) / 1000);
-                timerElement.textContent = `Time until next collect: ${timeLeft}s`;
-            }
-        }, 1000);
     </script>
 </body>
 </html>
