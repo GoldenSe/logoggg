@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Mining Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f4f4;
+        }
+        #container {
+            display: flex;
+            align-items: center;
+            margin-top: 20px;
+        }
+        #gameArea {
+            width: 80vw;
+            height: 80vh;
+        }
+        #stats {
+            width: 200px;
+            padding: 20px;
+            border-left: 2px solid #ddd;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-left: 20px;
+        }
+        #username {
+            margin: 20px;
+            font-size: 1.2em;
+        }
+        h2 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+        p {
+            margin: 0.5em 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="username">Please log in with Telegram</div>
+    <script src="https://telegram.org/js/telegram-widget.js?7"
+        data-telegram-login="codex_cloud_bot"
+        data-size="large"
+        data-radius="10"
+        data-auth-url="https://your-github-pages-url/callback.html"
+        data-request-access="write"></script>
+    
+    <div id="container">
+        <div id="gameArea"></div>
+        <div id="stats">
+            <h2>Statistics</h2>
+            <p>Stone: <span id="stoneCount">0</span></p>
+            <p>Iron: <span id="ironCount">0</span></p>
+            <p>Gold: <span id="goldCount">0</span></p>
+            <p>Silver: <span id="silverCount">0</span></p>
+            <p>Coal: <span id="coalCount">0</span></p>
+            <p>Copper: <span id="copperCount">0</span></p>
+            <p>Diamond: <span id="diamondCount">0</span></p>
+            <p>Energy: <span id="energyCount">100</span></p> <!-- Added Energy -->
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="script.js"></script>
+    <script src="auth.js"></script>
+</body>
+</html>
